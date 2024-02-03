@@ -1,0 +1,29 @@
+# Logs
+logs
+*.log
+/.history
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm/
+
+# Build files
+dist/
+build/
+
+# Coverage reports
+coverage/
+
+# Typescript compilation
+*.tsbuildinfo
+
+
+
