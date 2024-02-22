@@ -305,17 +305,17 @@ const apointmentControl = {
         return res.status(400).json({ status: false, msg: "Invalid Inputs, Please make sure you are filling every feild", data: errors.array() });
       }
       const { clinic, date, patient } = req.body;
-      const appointments = await models.appiontment.findOne({
-        clinic, date, patient
-      });
+      // const appointments = await models.appiontment.findOne({
+      //   clinic, date, patient
+      // });
       req.body.user = req?.user?.id;
-      if (appointments) {
-        return res.json({ status: false, msg: "Appointment already exists against the date", data: null })
-      }
+      // if (appointments) {
+      //   return res.json({ status: false, msg: "Appointment already exists against the date", data: null })
+      // }
 
       const addAppointmentOnly = await models.appiontment.create(req.body);
       const user = await models.user.findById(req?.patient);
-      const historyLink = "https://sss-g-client.vercel.app/ui/questionaires/display/654942246601e15b38572359?appointment=" + addAppointmentOnly?._id;
+      const historyLink = "https://sss-g-c-lient.vercel.app/ui/questionaires/display/654942246601e15b38572359?appointment=" + addAppointmentOnly?._id;
       await gmailSender.gmailSender(
         user?.email,
         `Appointment Confirmation - ${addAppointmentOnly?.date}`,
