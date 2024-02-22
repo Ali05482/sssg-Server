@@ -118,6 +118,10 @@ const appiontment = mongoose.Schema(
     details: {
       type: String,
     },
+    isRefered: {
+      type: Boolean,
+      default: false
+    },  
     meeetingId: {
       type: String,
       default: "https://meet.google.com/zjq-yzsj-jyy"

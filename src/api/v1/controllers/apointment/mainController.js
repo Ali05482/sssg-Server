@@ -6,7 +6,7 @@ const services = require("../../../../services");
 const { APIResponse } = require("../../../../helper");
 const bcrypt = require("bcrypt");
 const _ = require('lodash');
-const { v4: uuidv4, v4 } = require('uuid');
+const moment = require('moment-timezone');
 const { convertTimeToMinutes } = require("../doctor/doctorsSchedules");
 const apointmentControl = {
   generatePaassword: async (password) => {
@@ -111,7 +111,7 @@ const apointmentControl = {
     try {
       req.body.role = "patient";
       let query = {};
-      if(!_?.isEmpty(req?.body?.email)){
+      if (!_?.isEmpty(req?.body?.email)) {
         {
           query = {
             $or: [
@@ -505,29 +505,32 @@ const apointmentControl = {
   getDoctorsTodaysAppointments: async (req, res) => {
     try {
       let query = {};
+      const currentDatePakistan = moment().tz('Asia/Karachi').format('YYYY-MM-DD');
       if (req?.user?.role === "doctor") {
         query = {
           doctor: req?.user?.id,
-          date: new Date()?.toISOString()?.split('T')[0],
+          date: currentDatePakistan,
           status: "pending"
         }
       } else if (req?.user?.role === "patient") {
         query = {
           patient: req?.user?.id,
-          date: new Date()?.toISOString()?.split('T')[0],
+          date: currentDatePakistan,
           status: "pending"
         }
       } else if (req?.user?.role === "admin" || req?.user?.role === "supperAdmin") {
         query = {
-          date: new Date()?.toISOString()?.split('T')[0],
+          date: currentDatePakistan,
           status: "pending"
         }
       } else {
         return res?.status(401)?.json({ status: false, msg: "Unauthorized", data: null })
       }
+      console.log(query, "=====>")
       const getAllAppointments = await models.appiontment.find(query).populate("patient").populate("questionaire").populate("doctor").sort({ createdAt: -1 });
       return res.json({ status: true, msg: "Appointments Fetched Successfully", data: getAllAppointments })
     } catch (error) {
+      console.log(error?.message)
       return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
     }
   },
@@ -542,7 +545,7 @@ const apointmentControl = {
       } else {
         query = { inConnection: false }
       }
-      const updateAppointment = await models.appiontment.findByIdAndUpdate(req?.params?.appointmentId, query);
+      const updateAppointment = await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, query);
       if (!updateAppointment) {
         return res.json({ status: false, msg: "Appointment not found", data: null })
       }

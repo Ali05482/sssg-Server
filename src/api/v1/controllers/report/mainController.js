@@ -1,6 +1,6 @@
 const { validationResult } = require("express-validator");
 const models = require("../../../../models");
-
+const _ = require("lodash");
 
 
 const reportControll = {}
@@ -79,7 +79,12 @@ reportControll.addAndUpdateReferral = async (req, res) => {
     if (req.body?.id) {
       const referral = await models.referral.findByIdAndUpdate(req.body?.id, req.body);
       if (referral) {
-        await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { referral: referral?._id });
+        const referralDoctor = await models.user.findById(req?.user?.id).lean();
+        if(_?.isEmpty(referralDoctor)){
+          return res.json({ status: false, msg: "Referral Doctor Not Found", data: null });
+        }
+        console.log("referralDoctor", referralDoctor)
+        await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { referral: referral?._id, meeetingId: referralDoctor?.meetingId, isRefered: true});
         return res.json({ status: true, msg: "Referral Updated", data: referral });
       }
       return res.json({ status: false, msg: "Something Went Wrong", data: null });
@@ -93,6 +98,7 @@ reportControll.addAndUpdateReferral = async (req, res) => {
       return res.json({ status: false, msg: "Something Went Wrong", data: null });
     }
   } catch (error) {
+    console.log("error.message", error.message)
     return res.status(500).json({ status: false, msg: "Something Went Wrong, Contact Admin", data: null });
   }
 }
@@ -156,7 +162,7 @@ reportControll.getReferralByAppointmentId = async (req, res) => {
 }
 reportControll.getReferralByReferDoctorId = async (req, res) => {
   try {
-    const referrals = await models.referral.find({ referralDoctorId: req?.user?.id }).populate("previousDoctorId").populate("referralDoctorId").populate("patientId");
+    const referrals = await models.referral.find({ referralDoctorId: req?.user?.id }).populate("previousDoctorId").populate("referralDoctorId").populate("patientId").populate().populate("appointmentId").lean();
     return res.json({ status: true, msg: "Referrals ", data: referrals });
   } catch (error) {
     console.log(error.message)

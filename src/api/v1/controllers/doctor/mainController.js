@@ -11,44 +11,44 @@ const doctorControl = {
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
     }
-   try {
-  console.log("checking......")
-    req.body.role = "doctor"
-  const createdUser = await services.generator.addWithReturnId(
-      req,
-      res,
-      models.user,
-      "Doctor User"
-    );
-    console.log(createdUser.status)
-    if(createdUser.status){
-     req.body.user = createdUser.data._id
-     console.log("hello")
-     await services.generator.add(
+    try {
+      console.log("checking......")
+      req.body.role = "doctor"
+      const createdUser = await services.generator.addWithReturnId(
         req,
         res,
-        models.doctor,
-        "Appointment "
+        models.user,
+        "Doctor User"
       );
-   
-    } else {
+      console.log(createdUser.status)
+      if (createdUser.status) {
+        req.body.user = createdUser.data._id
+        console.log("hello")
+        await services.generator.add(
+          req,
+          res,
+          models.doctor,
+          "Appointment "
+        );
+
+      } else {
+        return APIResponse(
+          `Something Went Wrong, Try again, ${createdUser.data}`,
+          null,
+          res,
+          false,
+          500
+        );
+      }
+    } catch (error) {
       return APIResponse(
-        `Something Went Wrong, Try again, ${createdUser.data}`,
+        `Something Went Wrong, Try again, ${error.message}`,
         null,
         res,
         false,
         500
       );
     }
-   } catch (error) {
-    return APIResponse(
-      `Something Went Wrong, Try again, ${error.message}`,
-      null,
-      res,
-      false,
-      500
-    );
-   }
   },
   // edit: async (req, res) => {
   //   if (!req.params.id) {
@@ -69,24 +69,45 @@ const doctorControl = {
   //   );
   // },
   getAll: async (req, res) => {
-   try {
-      const doctors = await models.user.find({role:{ $in: ["doctor"]}});
+    try {
+      let doctors = await models.user.find({ role: { $in: ["doctor"] } }).lean();
+      const editedDoctors = []
+      const doctorInformation = await models.doctor.find({ user: { $in: doctors.map(item => item._id) } });
+      doctors?.forEach((item, index) => {
+        item.doctor = Object
+        let doctorInfo = {}
+        let editedDoctor = {
+          ...item,
+          doctor: {}
+        }
+        for (let i = 0; i < doctorInformation.length; i++) {
+          if (doctorInformation[i]?.user?.toString() === item?._id?.toString()) {
+            doctorInformation[i].user = item
+            doctorInfo = doctorInformation[i]
+            break;
+          }
+        }
+        editedDoctor.doctor = doctorInfo;
+        editedDoctors.push(editedDoctor)
+      })
       const patientLastAccessed = await models.appiontment.find({ patient: req?.params?.patientId })
-      .sort({ timestamp: -1 })  // Assuming timestamp is the field you want to use for sorting
-      .skip(1)  // Skip the latest record
-      .limit(1);
-      return res.json({status:true, msg:"All Doctors", data:doctors, lastAccessed:patientLastAccessed})
-   } catch (error) {
-    return res?.json({status:false, msg:"Something went wrong", data:null})
-   }
+        .sort({ timestamp: -1 })  // Assuming timestamp is the field you want to use for sorting
+        .skip(1)  // Skip the latest record
+        .limit(1);
+        console.log("patientLastAccessed===>", editedDoctors)
+      return res.json({ status: true, msg: "All Doctors", data: editedDoctors, lastAccessed: patientLastAccessed })
+    } catch (error) {
+      console.log("error?.message", error?.message)
+      return res?.json({ status: false, msg: "Something went wrong", data: null })
+    }
   },
   getDoctorsForScheduling: async (req, res) => {
-   try {
-     const doctors = await models.doctor.find({}).populate("user");
-      return res.json({status:true, msg:"All Doctors", data:doctors})
-   } catch (error) {
-    return res?.json({status:false, msg:"Something went wrong", data:null})
-   }
+    try {
+      const doctors = await models.doctor.find({}).populate("user");
+      return res.json({ status: true, msg: "All Doctors", data: doctors })
+    } catch (error) {
+      return res?.json({ status: false, msg: "Something went wrong", data: null })
+    }
   },
 
   getById: async (req, res) => {
