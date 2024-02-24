@@ -22,6 +22,13 @@ router.post(
   validations.doctorModule.add,
   doctorSchedules.createOrUpdate
 ); //Adding New Group
+router.post(
+  "/addAndEditDoctor",
+  middlewares.authToken,
+  middlewares.authorization(['admin']),
+  validations.doctorModule.add,
+  doctors.addAndEditDoctor
+); 
 
 
 router.get("/getAll/:patientId", 
@@ -48,6 +55,11 @@ router.get("/getDoctorReservedAppointments/:id",
 middlewares.authToken,
 middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
 doctorSchedules.getDoctorReservedAppointments); 
+
+router.get("/getAllDoctorsForDoctors", 
+middlewares.authToken,
+middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
+doctors.getAllDoctorsForDoctors); 
 
 
 
