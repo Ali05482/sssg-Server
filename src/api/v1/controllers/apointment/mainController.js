@@ -130,7 +130,6 @@ const apointmentControl = {
         }
         req.body.email = null;
       }
-      console.log(query, "=====>")
       const user = await models.user.findOne(query);
       if (user) {
         return res.json({ status: false, msg: `Patient already exists with  ${user?.phoneNumber ?? 'Phone: ' + user?.phoneNumber}   ${user?.email ?? "Email: " + user?.email}, Please search with mobile number or email, and create appointments`, data: null })
@@ -304,18 +303,24 @@ const apointmentControl = {
       if (!errors.isEmpty()) {
         return res.status(400).json({ status: false, msg: "Invalid Inputs, Please make sure you are filling every feild", data: errors.array() });
       }
-      const { clinic, date, patient } = req.body;
-      // const appointments = await models.appiontment.findOne({
-      //   clinic, date, patient
-      // });
+     
       req.body.user = req?.user?.id;
-      // if (appointments) {
-      //   return res.json({ status: false, msg: "Appointment already exists against the date", data: null })
-      // }
-
+      console.log("req.body", req.body)
       const addAppointmentOnly = await models.appiontment.create(req.body);
-      const user = await models.user.findById(req?.patient);
-      const historyLink = "https://sss-g-c-lient.vercel.app/ui/questionaires/display/654942246601e15b38572359?appointment=" + addAppointmentOnly?._id;
+      const user = await models.user.findById(req?.body?.patient);
+      const historyLink = "https://app.fitwellhub.com/ui/questionaires/display/654942246601e15b38572359?appointment=" + addAppointmentOnly?._id;
+      // const sendEmail = await fetch('https://glonetex-email-service.vercel.app/fitwell/email', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body:JSON.stringify({
+      //     email: user?.email,
+      //     subject: `Appointment Confirmation - ${addAppointmentOnly?.date}`,
+      //     html:"<h1>Appointment Confirmation</h1>",
+      //   })
+      // })
+      // console.log("sendEmail", sendEmail)
       await gmailSender.gmailSender(
         user?.email,
         `Appointment Confirmation - ${addAppointmentOnly?.date}`,
@@ -526,7 +531,6 @@ const apointmentControl = {
       } else {
         return res?.status(401)?.json({ status: false, msg: "Unauthorized", data: null })
       }
-      console.log(query, "=====>")
       const getAllAppointments = await models.appiontment.find(query).populate("patient").populate("questionaire").populate("doctor").sort({ createdAt: -1 });
       return res.json({ status: true, msg: "Appointments Fetched Successfully", data: getAllAppointments })
     } catch (error) {

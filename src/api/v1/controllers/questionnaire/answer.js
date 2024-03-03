@@ -1,6 +1,7 @@
 const models = require("../../../../models");
 const { validationResult } = require("express-validator");
 const services = require("../../../../services");
+const _ = require('lodash');
 const mongoose = require('mongoose')
 const answer = {
   add: async (req, res) => {
@@ -21,7 +22,6 @@ const answer = {
   },
   checkObjectIdsExist: async (objectIds) => {
     try {
-      // Find all documents that match the array of object IDs
       const foundDocuments = await models.question.find({
         _id: { $in: objectIds.map(id => new mongoose.Types.ObjectId(id)) },
       });
@@ -64,12 +64,6 @@ const answer = {
   },
   addBulk: async (req, res) => {
     try {
-      // const errors = validationResult(req);
-      // if (!errors.isEmpty()) {
-      //   return res.status(400).json({ status: false, msg: "Invalid Inputs, Please make sure you are filling every feild", data: errors.array() });
-      // }
-      // console.log(req.body.totalQuestion)1
-      // Creating Group and updating its folder
       const arrToBeDisplat = [];
       const createGroup = await models.questionGroup.create({
         name: req.body.questionGroup,
@@ -100,8 +94,6 @@ const answer = {
             console.log('Answers:');
             for (const answer of subObject.answers) {
               const key = Object.keys(answer)
-              // console.log("ans======>", answer[key[0]].answer)
-              console.log("ans======>", answer.answerType)
               const createAnswers = await models.answer.create({
                 questionId: addQuestion._id,
                 answer: answer[key[0]].answer,
@@ -305,6 +297,56 @@ const answer = {
       const getVitals = await models.vitals.findOne({appointment:req.params.id});
       return res.json({ status: true, msg: "Vitals Against Appointment", data: getVitals })
     } catch (error) {
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  addAnswerWithQuestionId : async (req, res) => {
+    try {
+      if(!_?.isEmpty(req?.body?.questionId) || !_?.isEmpty(req?.body?.answer) || !_?.isEmpty(req?.body?.answerType)){
+        const isQuestion = await models.question.findById(req?.body?.questionId);
+        if(!isQuestion){
+          return res.json({ status: false, msg: "Sorry this question group does not exists, please create one first", data: null });
+        }
+        const addAnswer = await models.answer.create(req?.body);
+        if(!addAnswer){
+          return res.json({ status: false, msg: "Something Went Wrong, Try again......", data: null });
+        }
+        await models.question.findByIdAndUpdate(isQuestion?._id, { $push: { answers: addAnswer?._id } })
+      }
+      const getVitals = await models.vitals.findOne({appointment:req.params.id});
+      return res.json({ status: true, msg: "Question", data: getVitals })
+    } catch (error) {
+      console.log("error.message", error.message)
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  editAnswerWithQuestionId : async (req, res) => {
+    try {
+      if(!_?.isEmpty(req?.body?.questionId) || !_?.isEmpty(req?.body?.answer) || !_?.isEmpty(req?.body?.answerType)){
+        const payload = {
+          answer:req?.body?.answer,
+          answerType:req?.body?.answerType
+        }
+        const updateAnswer = await models.answer.findByIdAndUpdate(req?.params?.id, payload, {new:true});
+        if(!updateAnswer){
+          return res.json({ status: false, msg: "Something Went Wrong, Try again later......", data: null });
+        }
+        return res.json({ status: true, msg: "Answer Updated Successfully", data: updateAnswer }) 
+      }
+    } catch (error) {
+      console.log("error.message", error.message)
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  deleteAnswerById : async (req, res) => {
+    try {
+      const deleteAnswer = await models.answer.findByIdAndDelete(req?.params?.id);
+      if(!deleteAnswer){
+        return res.json({ status: false, msg: "Something Went Wrong, Try again later......", data: null });
+      }
+      return res.json({ status: true, msg: "Answer Deleted Successfully", data: deleteAnswer })
+    } catch (error) {
+      console.log("error.message", error.message)
       return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
     }
   }

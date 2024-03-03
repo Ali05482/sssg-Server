@@ -13,28 +13,27 @@ const prescription = mongoose.Schema(
     prescriptionName: {
       type: String,
     },
-    medicalInstruction:[
+    medicalInstruction: [
       {
-        medicineName:{
+        medicineName: {
           type: String,
           required: [true, "Medicine name is required"]
         },
-        doseInstcruction:{
+        doseInstcruction: {
           type: String,
           required: [true, "Dose instruction is required"]
         },
-        quantity:{
-          type: Number,
+        quantity: {
+          type: String,
           required: [true, "Quantity is required"]
         },
-        repeats:{
-          type: String,
-          required: [true, "Repeat instructions is required"]
-        },
-        luCode:{
+        repeats: {
           type: String,
         },
-        uniqueId:{
+        luCode: {
+          type: String,
+        },
+        uniqueId: {
           type: String,
         },
       }

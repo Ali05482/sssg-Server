@@ -246,6 +246,14 @@ const questionGroups = {
       "Question Group"
     );
   },
+  getQuestionGroupById : async (req,res) =>{
+    try {
+      const questionGroup = await models.questionGroup.findById(req.params.id);
+      return res.json({status:true,msg:"Question Group Fetched",data:questionGroup});
+    } catch (error) {
+      return res.status(400).json({status:false,msg:"Something Went Wrong",data:error.message});
+    }
+  }
 }
 module.exports = questionGroups;
 

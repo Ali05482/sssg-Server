@@ -13,7 +13,7 @@ const clinic = mongoose.Schema(
     type: {
       type: String,
       default:"default",
-      enum:["default","pharmacy","hospital","clinic","lab","diagnostic center","other"]
+      enum:["default","pharmacy","hospital","clinic", "virtualClinic", "physicalClinic","lab","diagnostic center","other"]
     },
     city:{
       type:String,

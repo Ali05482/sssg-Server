@@ -132,7 +132,7 @@ const doctorControl = {
   addAndEditDoctor: async (req, res) => {
     try {
       req.body.role = "doctor"
-      // console.log("req?.body?._id", req?.body)
+      console.log("req?.body?._id", req?.body)
       if (!_?.isEmpty(req?.body?._id)) {
         delete req.body.retypePassword;
         delete req.body.password
@@ -145,25 +145,34 @@ const doctorControl = {
             licenseNumber: req?.body?.licenseNumber,
             faxNumber: req?.body?.faxNumber
           }
-          const updateDoctorInfo = await models.doctor.findByIdAndUpdate(req?.body?.doctor?._id,updatedDoctorInfo );
+          const updateDoctorInfo = await models.doctor.findByIdAndUpdate(req?.body?.doctor?._id, updatedDoctorInfo);
           // console.log("doctor", doctor)
           return res.json({ status: true, msg: "Doctor Updated", data: doctor })
         }
-       
-      } else {
-        const findDoctor = await models.user.findOne({ 
 
-          $or: [  
+      } else {
+        delete req.body._id
+        const findDoctor = await models.user.findOne({
+          $or: [
             { email: req?.body?.email },
             { faxNumber: req?.body?.faxNumber },
+            { phoneNumber: req?.body?.phoneNumber },
             { licenseNumber: req?.body?.licenseNumber },
             { providerNumber: req?.body?.providerNumber },
           ]
-         });  
-        if(findDoctor){
-          return res.json({ status: false, msg: "Doctor Already Exist", data: null }) 
+        }).lean();
+        if (findDoctor) {
+          const show = [
+            findDoctor?.email,
+            findDoctor?.faxNumber,
+            findDoctor?.phoneNumber,
+            findDoctor?.licenseNumber,
+            findDoctor?.providerNumber
+          ];
+          return res.json({ status: false, msg: "Doctor Already Exist with " + show?.map(x=>x ?? ""), data: null })
         }
         const newDoctor = await models.user.create(req?.body);
+        console.log(newDoctor)
         if (newDoctor) {
           const doctorInfo = {
             user: newDoctor._id,

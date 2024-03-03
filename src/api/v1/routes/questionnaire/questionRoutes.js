@@ -45,6 +45,35 @@ router.delete("/delete/:id",
   middlewares.authorization(['admin']),
   questionsControl.deleteById
 ); 
-
+router.get("/getQuestionsByGroupId/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  questionsControl.getQuestionsByGroupId
+);
+router.get("/searchQuestion/:search/:type/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  questionsControl.searchQuestion 
+);
+router.delete("/deleteQuestionById/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  questionsControl.deleteQuestionById
+);
+router.post("/addQuestionWIthGroupId",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  questionsControl.addQuestionWIthGroupId
+);
+router.get("/getQuestionsOfAnswer/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  questionsControl.getQuestionsOfAnswer
+);
+router.put("/unLinkQuestionsFromAnswers/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  questionsControl.unLinkQuestionsFromAnswers
+);
 
 module.exports = router;

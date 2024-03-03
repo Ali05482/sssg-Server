@@ -82,7 +82,23 @@ router.delete("/delete/:id",
   middlewares.authToken, 
   middlewares.authorization(['admin']),
   asnwerControl.deleteById
+);
+router.post("/addAnswerWithQuestionId",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  asnwerControl.addAnswerWithQuestionId
 ); 
+router.put("/editAnswerWithQuestionId/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  asnwerControl.editAnswerWithQuestionId
+);
+router.delete("/deleteAnswerById/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin']),
+  asnwerControl.deleteAnswerById
+);
+
 
 
 module.exports = router;

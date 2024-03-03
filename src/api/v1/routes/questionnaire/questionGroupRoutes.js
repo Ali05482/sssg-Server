@@ -40,6 +40,11 @@ router.delete("/delete/:id",
   middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
   questionGroupsControl.deleteById
 ); 
+router.get("/getQuestionGroupById/:id",
+  middlewares.authToken, 
+  middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
+  questionGroupsControl.getQuestionGroupById
+);
 
 
 module.exports = router;
