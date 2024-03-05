@@ -214,7 +214,7 @@ const questionGroups = {
               }
             }
           }
-        })
+        }).lean()
       return res.json({ status: true, msg: "Data Fetched", data });
     } catch (error) {
       return res.json({ status: false, msg: "Error", data: error.message });
