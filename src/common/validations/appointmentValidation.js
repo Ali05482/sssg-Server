@@ -59,7 +59,17 @@ const doctorNote = [
   body("data").notEmpty().withMessage("Data is required"),
 ]
 
+const editAppointment = [
+  body("patient").notEmpty().withMessage("Patient is required"),
+  body("doctor").notEmpty().withMessage("Doctor is required"),
+  body("appiontmentType").notEmpty().withMessage("Appointment Type is required"),
+  body("date").notEmpty().withMessage("Date is required"),
+  body("time").notEmpty().withMessage("Time is required"),
+  body("duration").notEmpty().withMessage("Duration is required"),
+  body("meeetingId").notEmpty().withMessage("Details is required"),
+];
+
 
 module.exports = {
-  add, singleAppontment, vitals, updateAppointment, addAppointmentOnly, doctorNote
+  add, singleAppontment, vitals, updateAppointment, addAppointmentOnly, doctorNote, editAppointment 
 };

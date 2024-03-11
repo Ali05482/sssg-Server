@@ -32,6 +32,10 @@ router.post("/view/",
   middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
   patientControl.getAll
 ); 
-
+router.get("/fetchPatients",
+  middlewares.authToken, 
+  middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
+  patientControl.fetchPatients
+); 
 
 module.exports = router;

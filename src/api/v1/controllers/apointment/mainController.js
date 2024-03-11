@@ -7,6 +7,7 @@ const { APIResponse } = require("../../../../helper");
 const bcrypt = require("bcrypt");
 const _ = require('lodash');
 const moment = require('moment-timezone');
+const momentum = require('moment');
 const { convertTimeToMinutes } = require("../doctor/doctorsSchedules");
 const apointmentControl = {
   generatePaassword: async (password) => {
@@ -86,6 +87,7 @@ const apointmentControl = {
     if (!newAppintment) {
       return res.status(200).json({ status: false, msg: "Something Went Wrong, Try Again", data: null })
     }
+    req.body.user = req?.user?.id;
     const sendEmail = await gmailSender.gmailSender(
       req.body.email,
       `Appointment Confirmation - ${req.body.date} ${req.body.time}`,
@@ -137,13 +139,12 @@ const apointmentControl = {
       else {
         req.body.password = await apointmentControl.generatePaassword(req.body.password);
         const newPatent = await models.user.create(req.body);
-
         if (newPatent) {
-          req.body.user = req?.body?.user?.id;
+          req.body.user = req?.user?.id;
           req.body.patient = newPatent?._id;
           const newAppintment = await models.appiontment.create(req.body);
           if (!newAppintment) {
-            await models.user.findByIdAndDelete(newPatent._id);
+            await models.user.findByIdAndDelete(newPatent?._id);
             return res.status(400).json({ status: false, msg: "Something Went Wrong, Try Again", data: null })
           }
           const historyLink = "https://sss-g-client.vercel.app/ui/questionaires/display/654942246601e15b38572359?appointment=" + newAppintment?._id;
@@ -303,7 +304,6 @@ const apointmentControl = {
       if (!errors.isEmpty()) {
         return res.status(400).json({ status: false, msg: "Invalid Inputs, Please make sure you are filling every feild", data: errors.array() });
       }
-     
       req.body.user = req?.user?.id;
       console.log("req.body", req.body)
       const addAppointmentOnly = await models.appiontment.create(req.body);
@@ -570,7 +570,7 @@ const apointmentControl = {
       } else {
         const doctorNote = await models.doctorNote.create(req?.body);
         if (!doctorNote) {
-          return res.json({ status: false, msg: "Doctor Note not found", data: null })
+          return res.json({ status: false, msg: "Doctor Note not created, try again", data: null })
         }
         await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { doctorNote: doctorNote?._id })
         return res.json({ status: true, msg: "Doctor Note Created Successfully", data: doctorNote })
@@ -589,8 +589,165 @@ const apointmentControl = {
     } catch (error) {
       return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
     }
-  }
+  },
+  getNotesByDoctorId: async (req, res) => {
+    try {
+      const query = {
+        patient: req?.params?.id,
+        doctor: { $exists: true },
+      }
+      let doctorNote = await models.appiontment.find(query).populate("patient").populate("clinic").populate('user').populate(
+        {
+          path: "doctor",
+          model: "user"
+        }
+      ).sort({ createdAt: -1 }).lean();
+      const doctorDetails = await models.doctor.find({
+        user: { $in: doctorNote.map(x => x?.doctor) }
+      });
 
+      if (_?.isEmpty(doctorNote)) {
+        return res.json({ status: false, msg: "Doctor Note not found", data: null })
+      }
+      return res.json({ status: true, msg: "Doctor Note", data: doctorNote, doctorDetails })
+    } catch (error) {
+      console.log("error?.message", error?.message)
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  getAppointmentFiles: async (req, res) => {
+    try {
+      const appointmentFiles = await models.appointmentFiles.findOne({ appointment: req?.params?.id });
+      if (!appointmentFiles) {
+        return res.json({ status: false, msg: "Files not found", data: null })
+      }
+      return res.json({ status: true, msg: "Files", data: appointmentFiles })
+    } catch (error) {
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  getAppointmentForManagement: async (req, res) => {
+    try {
+      let query = {};
+      if (req?.params?.skipDate != "true") {
+        let twoDaysAgo = momentum()?.subtract(2, 'days')?.format('YYYY-MM-DD');
+        if (req?.params?.type == "all") {
+          query = {
+            date: {
+              $gte: twoDaysAgo
+            }
+          };
+        } else if (req?.params?.type == "date") {
+          let fromDate = req?.params?.fromDate;
+          let toDate = req?.params?.toDate;
+          if (!momentum(fromDate, 'YYYY-MM-DD', true)?.isValid() || !momentum(toDate, 'YYYY-MM-DD', true)?.isValid()) {
+            return res.status(400).json({ status: false, msg: "Invalid date format", data: null });
+          }
+          if ((!_?.isEmpty(fromDate) && !_?.isEmpty(toDate))) {
+            query.date = {
+              $gte: fromDate,
+              $lte: toDate
+            };
+          } else if (!_?.isEmpty(fromDate)) {
+            query.date = {
+              $gte: fromDate
+            };
+          } else if (!_?.isEmpty(toDate)) {
+            query.date = {
+              $lte: toDate
+            };
+          }
+        }
+      }
+      if ((!_?.isEmpty(req?.params?.keyword) && !_?.isNull(req?.params?.keyword) && !_?.isUndefined(req?.params?.keyword) && req?.params?.keyword !== "null" && req?.params?.keyword !== "undefined")) {
+        const keyword = req?.params?.keyword;
+        query.$or = [
+          { "patientInfo.firstName": { $regex: new RegExp(keyword, 'i') } },
+          { "patientInfo.lastName": { $regex: new RegExp(keyword, 'i') } },
+          { "patientInfo.email": keyword },
+          { "patientInfo.phoneNumber": keyword },
+          { "patientInfo.cnic": { $regex: new RegExp(keyword, 'i') } }
+        ];
+      }
+      const getAppointment = await models.appiontment.aggregate([
+        {
+          $lookup: {
+            from: "users", // Assuming 'users' is the collection for patients and doctors. Adjust if different.
+            localField: "patient",
+            foreignField: "_id",
+            as: "patientInfo"
+          }
+        },
+        {
+          $lookup: {
+            from: "clinics", // Assuming 'clinics' is the collection for clinics. Adjust if different.
+            localField: "clinic",
+            foreignField: "_id",
+            as: "clinicInfo"
+          }
+        },
+        {
+          $lookup: {
+            from: "users", // Assuming 'users' is also the collection for general user info. Adjust if different.
+            localField: "user",
+            foreignField: "_id",
+            as: "userInfo"
+          }
+        },
+        {
+          $lookup: {
+            from: "users", // Reusing 'users' for doctors, as specified in your populate example.
+            localField: "doctor",
+            foreignField: "_id",
+            as: "doctorInfo"
+          }
+        },
+        {
+          $unwind: "$patientInfo"
+        },
+        {
+          $unwind: "$clinicInfo"
+        },
+        {
+          $unwind: "$userInfo"
+        },
+        {
+          $unwind: "$doctorInfo"
+        },
+        {
+          $match: {
+            ...query
+          }
+        },
+        {
+          $sort: { "createdAt": -1 }
+        }
+      ]);
+      
+      const doctorDetails = await models.doctor.find({
+        user: { $in: getAppointment?.map(x => x?.doctor) }
+      });
+      return res.json({ status: true, msg: "Appoints Fetched Successfully", data: getAppointment, doctorDetails })
+    } catch (error) {
+      console.log("error?.message", error?.message)
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  editAppointment: async (req, res) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res?.json({ status: false, msg: "Some input you are missing", data: errors?.array() });
+      }
+      const updatedAppointment = await models.appiontment.findByIdAndUpdate(req?.params?.id, req?.body, { new: true });
+      if (!updatedAppointment) {
+        return res.json({ status: false, msg: "Appointment not found", data: null })
+      }
+      return res.json({ status: true, msg: "Appointment Updated Successfully", data: updatedAppointment })
+    } catch (error) {
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  }
 };
 
 

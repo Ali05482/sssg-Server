@@ -61,6 +61,11 @@ middlewares.authToken,
 middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
 doctors.getAllDoctorsForDoctors); 
 
+router.post("/inviteDoctor", 
+middlewares.authToken,
+middlewares.authorization(['admin', 'doctor','patient', 'compodar', 'schedulingTeam']),
+doctors.inviteDoctor); 
+
 
 
 

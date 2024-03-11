@@ -6,6 +6,7 @@ const services = require("../../../../services");
 const { APIResponse } = require("../../../../helper");
 const _ = require("lodash");
 const { ObjectId } = require("mongodb");
+const { inviteDoctor } = require("../../../../services/email");
 const doctorControl = {
   add: async (req, res) => {
     // Check for validation errors
@@ -14,7 +15,6 @@ const doctorControl = {
       return res.status(400).json({ errors: errors.array() });
     }
     try {
-      console.log("checking......")
       req.body.role = "doctor"
       const createdUser = await services.generator.addWithReturnId(
         req,
@@ -22,10 +22,8 @@ const doctorControl = {
         models.user,
         "Doctor User"
       );
-      console.log(createdUser.status)
       if (createdUser.status) {
         req.body.user = createdUser.data._id
-        console.log("hello")
         await services.generator.add(
           req,
           res,
@@ -72,7 +70,7 @@ const doctorControl = {
   // },
   getAll: async (req, res) => {
     try {
-      let doctors = await models.user.find({ role: { $in: ["doctor"] } }).lean();
+      let doctors = await models.user.find({ role: { $in: ["doctor"] } }).populate('clinicId').lean();
       const editedDoctors = []
       const doctorInformation = await models.doctor.find({ user: { $in: doctors.map(item => item._id) } });
       doctors?.forEach((item, index) => {
@@ -96,7 +94,6 @@ const doctorControl = {
         .sort({ timestamp: -1 })  // Assuming timestamp is the field you want to use for sorting
         .skip(1)  // Skip the latest record
         .limit(1);
-      console.log("patientLastAccessed===>", editedDoctors)
       return res.json({ status: true, msg: "All Doctors", data: editedDoctors, lastAccessed: patientLastAccessed })
     } catch (error) {
       console.log("error?.message", error?.message)
@@ -132,7 +129,6 @@ const doctorControl = {
   addAndEditDoctor: async (req, res) => {
     try {
       req.body.role = "doctor"
-      console.log("req?.body?._id", req?.body)
       if (!_?.isEmpty(req?.body?._id)) {
         delete req.body.retypePassword;
         delete req.body.password
@@ -146,7 +142,6 @@ const doctorControl = {
             faxNumber: req?.body?.faxNumber
           }
           const updateDoctorInfo = await models.doctor.findByIdAndUpdate(req?.body?.doctor?._id, updatedDoctorInfo);
-          // console.log("doctor", doctor)
           return res.json({ status: true, msg: "Doctor Updated", data: doctor })
         }
 
@@ -169,10 +164,9 @@ const doctorControl = {
             findDoctor?.licenseNumber,
             findDoctor?.providerNumber
           ];
-          return res.json({ status: false, msg: "Doctor Already Exist with " + show?.map(x=>x ?? ""), data: null })
+          return res.json({ status: false, msg: "Doctor Already Exist with " + show?.map(x => x ?? ""), data: null })
         }
         const newDoctor = await models.user.create(req?.body);
-        console.log(newDoctor)
         if (newDoctor) {
           const doctorInfo = {
             user: newDoctor._id,
@@ -220,6 +214,26 @@ const doctorControl = {
       })
 
       return res.json({ status: true, msg: "All Doctors", data: editedDoctors })
+    } catch (error) {
+      console.log("error?.message", error?.message)
+      return res?.json({ status: false, msg: "Something went wrong", data: null })
+    }
+  },
+  inviteDoctor: async (req, res) => {
+    try {
+      const inviter = await models.user.findOne({ email: req?.body?.email });
+      if (_?.isEmpty(inviter)) {
+        const doctor = await models.doctor.findOne({ user: req?.user?.id });
+        const invite = await inviteDoctor(req?.body?.email, "Invitation to Fitwell Hub", `You have been invited to join Fitwell Hub by Dr. ${req?.user?.firstName} ${req?.user?.lastName} (${doctor?.specialty}). Please click the link below to join. <a href="https://fitwellhub.com">Fitwell Hub</a>`);
+        console.log("invite", invite)
+        if (invite?.status) {
+          return res?.json({ status: true, msg: "Doctor Invited", data: null });
+        } else {
+          return res?.json({ status: false, msg: "Invitation Failed, Reason: " + inviteDoctor?.msg, data: null });
+        }
+      } else {
+        return res?.json({ status: false, msg: "This user is already our member", data: null })
+      }
     } catch (error) {
       console.log("error?.message", error?.message)
       return res?.json({ status: false, msg: "Something went wrong", data: null })

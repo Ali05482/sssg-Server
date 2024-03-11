@@ -15,6 +15,7 @@ const answer = require("./questionnaire/answerRoutes");
 const platformRoute = require("./platfrom/platformRoute");   
 const reports = require("./report/mainRoute");   
 const upload = require("./upload/questionnaire");
+const uploadAppointmentsFiles = require('./upload/uploadAppointmentsFiles');
 router.use("/auth", auth);
 router.use("/user", user);
 router.use("/clinic", clinic);
@@ -31,6 +32,7 @@ router.use("/answer", answer);
 router.use("/platform", platformRoute);
 router.use("/reports", reports);
 router.use("/upload", upload);
+router.use("/upload/file", uploadAppointmentsFiles);
 
 
 module.exports = router;

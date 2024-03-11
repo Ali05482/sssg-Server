@@ -119,5 +119,24 @@ router.get("/getDoctorNote/:id",
   // middlewares.authorization(['admin', 'doctor', 'patient', 'compodar', 'schedulingTeam']),
   apointment.getDoctorNote);
 
+  router.get("/getNotesByDoctorId/:id",
+  middlewares.authToken,
+  middlewares.authorization(['admin', 'doctor', 'patient', 'compodar', 'schedulingTeam']),
+  apointment.getNotesByDoctorId);
 
+  router.get("/getAppointmentForManagement/:type/:keyword/:fromDate?/:toDate?/:skipDate?",
+  middlewares.authToken,
+  middlewares.authorization(['admin', 'doctor', 'patient', 'compodar', 'schedulingTeam']),
+  apointment.getAppointmentForManagement);
+
+  router.put("/editAppointment/:id",
+  middlewares.authToken,
+  middlewares.authorization(['admin', 'doctor', 'patient', 'compodar', 'schedulingTeam']),
+  validations.appointmentModule.editAppointment,
+  apointment.editAppointment);
+
+  
+  
+  
+  
 module.exports = router;

@@ -98,6 +98,11 @@ router.delete("/deleteAnswerById/:id",
   middlewares.authorization(['admin']),
   asnwerControl.deleteAnswerById
 );
+router.get("/getAnswerById/:id",
+  // middlewares.authToken, 
+  // middlewares.authorization(['admin']),
+  asnwerControl.getAnswerById
+);
 
 
 

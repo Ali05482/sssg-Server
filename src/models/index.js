@@ -23,6 +23,7 @@ const models = {
   referral: require('./referral'),
   requisition: require('./requisition'),
   doctorNote: require('./doctorNote'),
+  appointmentFiles: require('./appointmentFiles'),
 };
 
 module.exports = models;

@@ -246,10 +246,20 @@ const answer = {
       const getQuestionaires = await models.questionaire.findById(req.params?.id).populate([
         {
           path: "appointment",
-          populate: {
-            path: "patient",
-            model: "user"
-          },
+          populate: [
+            {
+              path: "patient",
+              model: "user"
+            },
+            {
+              path: "clinic",
+              model: "clinic"
+            },
+            {
+              path: "user",
+              model: "user"
+            }
+          ],
         },
         {
           path: "data.question_id.",
@@ -347,6 +357,21 @@ const answer = {
       return res.json({ status: true, msg: "Answer Deleted Successfully", data: deleteAnswer })
     } catch (error) {
       console.log("error.message", error.message)
+      return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
+    }
+  },
+  getAnswerById: async (req, res) => {
+    try {
+      const getAnswer = await models.answer.findById(req?.params?.id).populate({
+        path: 'linkedQuestion.questionId',
+        populate: {
+          path: 'answers',
+          model: 'answer',
+        }
+
+      });
+      return res.json({ status: true, msg: "Answer", data: getAnswer })
+    } catch (error) {
       return res.status(500).json({ status: false, msg: "Something Went Wrong", data: null })
     }
   }

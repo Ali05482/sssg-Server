@@ -159,6 +159,14 @@ const patientControl = {
    }
     
   },
+  fetchPatients: async (req, res) => {
+    try {
+      const patients = await models.user.find({role:"patient"});
+      return res.json({status:true, msg:"Patients", data:patients});
+    } catch (error) {
+      return res.status(500).json({status:false, msg:"Internal Server Error", data:null})
+    }
+  },
   // deleteById: async (req, res) => {
   //   // Check if ID parameter is missing in the request
   //   if (!req.params.id) {

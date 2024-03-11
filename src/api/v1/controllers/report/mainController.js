@@ -76,26 +76,27 @@ reportControll.addAndUpdateReferral = async (req, res) => {
       return res.status(400).json({ status: false, msg: "Please make sure all inputs", data: errors.array() });
     }
     req.body.userId = req?.user?.id;
-    if (req.body?.id) {
-      const referral = await models.referral.findByIdAndUpdate(req.body?.id, req.body);
-      if (referral) {
-        const referralDoctor = await models.user.findById(req?.user?.id).lean();
-        if(_?.isEmpty(referralDoctor)){
-          return res.json({ status: false, msg: "Referral Doctor Not Found", data: null });
+    const findReferralDoctor = await models.user.findById(req?.body?.referralDoctorId).lean();
+    if (!_?.isEmpty(findReferralDoctor)) {
+      if (req.body?.id) {
+        const referral = await models.referral.findByIdAndUpdate(req.body?.id, req.body);
+        if (referral) {
+          console.log("findReferralDoctor?.meetingId",findReferralDoctor?.meetingId)
+          await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { referral: referral?._id, meeetingId: findReferralDoctor?.meetingId, isRefered: true });
+          return res.json({ status: true, msg: "Referral Updated", data: referral });
         }
-        console.log("referralDoctor", referralDoctor)
-        await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { referral: referral?._id, meeetingId: referralDoctor?.meetingId, isRefered: true});
-        return res.json({ status: true, msg: "Referral Updated", data: referral });
+        return res.json({ status: false, msg: "Something Went Wrong", data: null });
       }
-      return res.json({ status: false, msg: "Something Went Wrong", data: null });
-    }
-    else {
-      const addReferral = await models.referral.create(req.body);
-      if (addReferral) {
-        await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { referral: addReferral?._id });
-        return res.json({ status: true, msg: "Referral Created", data: addReferral });
+      else {
+        const addReferral = await models.referral.create(req.body);
+        if (addReferral) {
+          await models.appiontment.findByIdAndUpdate(req?.body?.appointmentId, { referral: addReferral?._id, meeetingId: findReferralDoctor?.meetingId, isRefered: true});
+          return res.json({ status: true, msg: "Referral Created", data: addReferral });
+        }
+        return res.json({ status: false, msg: "Something Went Wrong", data: null });
       }
-      return res.json({ status: false, msg: "Something Went Wrong", data: null });
+    } else {
+      return res.json({ status: false, msg: "Referral Doctor Not Found", data: null });
     }
   } catch (error) {
     console.log("error.message", error.message)
@@ -153,7 +154,6 @@ reportControll.getPrescriptionByAppointmentId = async (req, res) => {
 reportControll.getReferralByAppointmentId = async (req, res) => {
   try {
     const referral = await models.referral.findOne({ appointmentId: req.params?.id });
-    console.log(referral + req.params?.id)
     return res.json({ status: true, msg: "Referral ", data: referral });
   } catch (error) {
     console.log(error.message)
@@ -171,7 +171,7 @@ reportControll.getReferralByReferDoctorId = async (req, res) => {
 }
 reportControll.getReport = async (req, res) => {
   try {
-    const fetchReport = await models.appiontment.findById(req?.params?.id).populate("sickNote").populate("prescription").populate("referral").populate("requisition").populate("vitals").lean();
+    const fetchReport = await models.appiontment.findById(req?.params?.id).populate("sickNote").populate("prescription").populate("referral").populate("requisition").populate("vitals").populate('doctorNote').lean();
     const appointments = await models.appiontment.find({ _id: { $ne: fetchReport._id } })
       .sort({ createdAt: -1 })
       .limit(2);
@@ -183,8 +183,7 @@ reportControll.getReport = async (req, res) => {
       const lastVisitDate = new Date(secondLastAppointment.createdAt);
       const monthsDifference = currentDate.getMonth() - lastVisitDate.getMonth() +
         (12 * (currentDate.getFullYear() - lastVisitDate.getFullYear()));
-
-        monthsDifference!=0?lastVisit = `Last Visit ${monthsDifference} months ago`:lastVisit = `Last Visit ${currentDate.getDate() - lastVisitDate.getDate()} days ago`;
+      monthsDifference != 0 ? lastVisit = `Last Visit ${monthsDifference} months ago` : lastVisit = `Last Visit ${currentDate.getDate() - lastVisitDate.getDate()} days ago`;
     }
     return res.json({ status: true, msg: "Report", data: fetchReport, lastVisit });
   } catch (error) {
