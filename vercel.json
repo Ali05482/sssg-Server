@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "functions": {
-    "getQuestionsAndAnswersByGroupId": {
+ "functions": {
+    "api/getQuestionsAndAnswersByGroupId.js": {
       "maxDuration": 30
     }
   },
