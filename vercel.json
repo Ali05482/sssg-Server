@@ -1,9 +1,8 @@
 {
   "version": 2,
  "functions": {
-    "api/getQuestionsAndAnswersByGroupId.js": {
+  "src/*.js": {
       "maxDuration": 30
-    }
   },
   "routes": [
     {
