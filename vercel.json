@@ -2,10 +2,10 @@
     "version": 2,
   "functions": {
     "api/test.js": {
-      "maxDuration": 30 // This function can run for a maximum of 30 seconds
+      "maxDuration": 30
     },
     "api/*.js": {
-      "maxDuration": 15 // This function can run for a maximum of 15 seconds
+      "maxDuration": 15 
     }
   },
     "builds": [
