@@ -1,5 +1,8 @@
 {
     "version": 2,
+     "api/*.js": {
+      "maxDuration": 45 // These functions can run for a maximum of 15 seconds
+    }
     "builds": [
       {
         "src": "app.js", 
