@@ -1,16 +1,10 @@
 {
   "version": 2,
  "functions": {
-    "app.js": {
+    "src/api/v1/controllers/questionnaire/questionGroups.js": {
       "maxDuration": 30
     }
   },
-   "builds": [
-    {
-      "src": "app.js", 
-      "use": "@vercel/node" 
-    }
-  ],
   "routes": [
     {
       "src": "/(.*)",
