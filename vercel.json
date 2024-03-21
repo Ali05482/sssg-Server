@@ -1,7 +1,7 @@
 {
   "version": 2,
  "functions": {
-    "src/api/v1/controllers/questionnaire/questionGroups.js": {
+    "api/getQuestionsAndAnswersByGroupId.js": {
       "maxDuration": 30
     }
   },
