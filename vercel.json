@@ -1,9 +1,10 @@
 {
   "version": 2,
  "functions": {
-  "src/*.js": {
+    "api/*.js": {
       "maxDuration": 30
-  },
+    }
+  }
   "routes": [
     {
       "src": "/(.*)",
