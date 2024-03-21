@@ -98,6 +98,7 @@ const socketToRoom = {};
 //   })
 // });
 
+
 app.use("/api/v1", mainRoute);
 app.get('/', (req, res) => {
   res.status(404).json({ status: true, msg: "I am working :)", data: null });
