@@ -2,7 +2,7 @@
     "version": 2,
      "api/*.js": {
       "maxDuration": 45
-    }
+    },
     "builds": [
       {
         "src": "app.js", 
